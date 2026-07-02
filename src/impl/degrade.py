@@ -12,6 +12,7 @@ def degrade(
 
     crf,
     noise_strength,
+    blur_sigma,
 
     audio_bitrate,
     volume,
@@ -31,10 +32,17 @@ def degrade(
         else force_mp4(output_path)
     )
 
+    # TODO : put those filter decls somewhere else...
+    # Maybe a file in decl/
+
     noise_filter = (
         f"noise=alls={noise_strength}:allf=t"
         if noise_strength > 0
         else ""
+    )
+
+    blur_filter = (
+        f"gblur=sigma={blur_sigma}"
     )
 
     volume_filter = f"volume=volume={volume}"
@@ -73,8 +81,8 @@ def degrade(
                     "-c:a", "aac", # tests used libopus, but FFMPEG only supports it w/ .mp4
                     "-b:a", f"{audio_bitrate}k",
 
-                    "-vf", filter_join([
-                        noise_filter, scale_filter, pad_filter, inverse_scale_filter
+                    "-vf", filter_join([ # TODO : customize chain order
+                        blur_filter, noise_filter, scale_filter, pad_filter, inverse_scale_filter
                     ]),
                     "-af", filter_join([
                         volume_filter

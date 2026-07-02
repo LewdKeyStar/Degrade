@@ -29,7 +29,11 @@ business_arguments = [
         default = DEFAULT_NOISE_STRENGTH
     ),
 
-    # TODO : also add gblur, randomizable
+    ParserArgument(
+        name = "blur_sigma",
+        special_shorthand = "sg",
+        type = float
+    ),
 
     # TODO : same as CRF for bitrate, probably fine, especially given volume concerns
 
