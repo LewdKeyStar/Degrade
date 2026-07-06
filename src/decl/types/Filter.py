@@ -39,6 +39,23 @@ class Filter(Shortenable):
 
     filter_string: Callable
 
+    default_priority: int = 0
+
+    @property
+    def meta_arguments(self):
+        return [
+            ParserArgument(
+                name = "priority",
+                special_shorthand = "r",
+                type = int,
+                default = self.default_priority
+            )
+        ]
+
+    # --------------------------------------------------------------------------
+    # ----------------------------- METHODS ------------------------------------
+    # --------------------------------------------------------------------------
+
     def __post_init__(self):
 
         if self.requires_explicit_enabling:
@@ -56,9 +73,18 @@ class Filter(Shortenable):
 
             self.enable_flag.add_to_parser(parser)
 
+        self.parameters += self.meta_arguments
+
         for param in self.parameters:
 
             param.name = f"{self.name}_{param.name}"
+
+            param.special_shorthand = (
+                f"{self.shorthand}{param.special_shorthand}"
+                if param.special_shorthand is not None
+                else None
+            )
+
             param.add_to_parser(parser)
 
 

@@ -4,6 +4,8 @@ from src.decl.types.ParserArgument import ParserArgument
 from src.state.store import runtime_value, is_enabled_at_runtime
 
 from src.utils.filter_utils import filter_join, h264_pad_filter
+from src.utils.sort_utils import priority_sort
+
 from src.decl.utils import is_dedicated_rescale_pass, is_not_dedicated_rescale_pass
 
 DEFAULT_NOISE_STRENGTH = 0
@@ -17,56 +19,6 @@ DEFAULT_GIF_PALETTE_SIZE = 32
 DEFAULT_SCALE_BACK_POST_ENCODE_CRF = 17
 
 all_video_filters = [
-
-    # TODO : move blur and noise after the scale filters,
-    # once we have a priority system working.
-    # Right now, they're here so they trigger first to match previous behavior ;
-    # But declaratively, they make more sense at the end.
-    # We can just set their default priority higher.
-
-    Filter(
-        name = "blur",
-
-        parameters = [
-            ParserArgument(
-                name = "sigma",
-                special_shorthand = "sg",
-                type = float
-            )
-        ],
-
-        filter_string = lambda: (
-            f"gblur=sigma={runtime_value('blur_sigma')}"
-        ),
-
-        active_condition = is_not_dedicated_rescale_pass
-    ),
-
-    Filter(
-        name = "noise",
-
-        parameters = [
-            # TODO : randomize noise strength on each pass
-
-            ParserArgument(
-                name = "strength",
-                special_shorthand = "e", # E. E. E. EE..E.E.EEEE..
-                default = DEFAULT_NOISE_STRENGTH
-            )
-        ],
-
-        filter_string = lambda: (
-            f"noise=alls={runtime_value('noise_strength')}:allf=t"
-        ),
-
-        active_condition = lambda: (
-            is_not_dedicated_rescale_pass()
-            and
-            runtime_value("noise_strength") > 0 # TODO : is this neeeded ?
-            # doesn't a 0-strength filter just do nothing, like blur ?
-        )
-    ),
-
     # For media degradation, downscaling is an excellent operation.
 
     Filter(
@@ -145,7 +97,7 @@ all_video_filters = [
 
             ParserArgument(
                 name = "crf",
-                special_shorthand = "sbocrf",
+                special_shorthand = "crf",
                 type = int,
                 default = DEFAULT_SCALE_BACK_POST_ENCODE_CRF
             )
@@ -170,7 +122,53 @@ all_video_filters = [
         # Oh well!
 
         active_condition = is_dedicated_rescale_pass
-    )
+    ),
+
+    Filter(
+        name = "blur",
+        default_priority = 1,
+
+        parameters = [
+            ParserArgument(
+                name = "sigma",
+                special_shorthand = "sg",
+                type = float
+            )
+        ],
+
+        filter_string = lambda: (
+            f"gblur=sigma={runtime_value('blur_sigma')}"
+        ),
+
+        active_condition = is_not_dedicated_rescale_pass
+    ),
+
+    Filter(
+        name = "noise",
+        special_shorthand = "e", # E. E. E. EE..E.E.EEEE..
+        default_priority = 1,
+
+        parameters = [
+            # TODO : randomize noise strength on each pass
+
+            ParserArgument(
+                name = "strength",
+                special_shorthand = "",
+                default = DEFAULT_NOISE_STRENGTH
+            )
+        ],
+
+        filter_string = lambda: (
+            f"noise=alls={runtime_value('noise_strength')}:allf=t"
+        ),
+
+        active_condition = lambda: (
+            is_not_dedicated_rescale_pass()
+            and
+            runtime_value("noise_strength") > 0 # TODO : is this neeeded ?
+            # doesn't a 0-strength filter just do nothing, like blur ?
+        )
+    ),
 ]
 
 all_audio_filters = [
@@ -183,6 +181,7 @@ all_audio_filters = [
 
             ParserArgument(
                 name = "percentage",
+                special_shorthand = "",
                 type = float,
                 default = DEFAULT_VOLUME_PERCENTAGE
             )
@@ -203,7 +202,7 @@ all_gif_filters = [
         parameters = [
             ParserArgument(
                 name = "size",
-                special_shorthand = "p",
+                special_shorthand = "",
                 default = DEFAULT_GIF_PALETTE_SIZE
             )
         ],
@@ -230,19 +229,28 @@ def register_filters(parser):
         filter.add_to_parser(parser)
 
 def get_video_filters_for_pass():
+
+    all_video_filters_by_priority = priority_sort(all_video_filters)
+
     return filter_join(*[
         filter()
-        for filter in all_video_filters
+        for filter in all_video_filters_by_priority
     ])
 
 def get_audio_filters_for_pass():
+
+    all_audio_filters_by_priority = priority_sort(all_audio_filters)
+
     return filter_join(*[
         filter()
-        for filter in all_audio_filters
+        for filter in all_audio_filters_by_priority
     ], for_audio = True)
 
 def get_gif_filters_for_pass():
+
+    all_gif_filters_by_priority = priority_sort(all_gif_filters)
+
     return filter_join(*[
         filter()
-        for filter in all_gif_filters
+        for filter in all_gif_filters_by_priority
     ])
