@@ -1,8 +1,14 @@
 from argparse import ArgumentParser
-from src.decl.arguments import register_business_arguments, passed_business_arguments
+
+from src.impl.degrade import degrade_video
+
+from src.decl.encoding_options import register_encoding_options
+from src.decl.filters import register_filters
+
+import src.state.store as store
+from src.state.store import runtime_value, override_runtime_value, is_enabled_at_runtime
 
 from src.utils.name_utils import is_gif, force_gif, add_suffix
-from src.impl.degrade import degrade
 
 # As much as I hate, we have to use this bait-and-switch hack again.
 # This is because trying to parse_known_args() the input path,
@@ -22,22 +28,19 @@ def main():
     parser.add_argument("input")
     parser.add_argument("--output", "-o", nargs = "?", default = DEFAULT_OUTPUT)
 
-    register_business_arguments(parser)
+    register_encoding_options(parser)
+    register_filters(parser)
 
-    args = vars(parser.parse_args())
+    store.init_state()
+    parser.parse_args(namespace = store.global_namespace)
 
-    if args["output"] is None:
-        args["output"] = add_suffix(args["input"], "degraded")
+    if runtime_value("output") is None:
+        override_runtime_value("output", add_suffix(runtime_value("input"), "degraded"))
 
-    if args["force_gif"] or is_gif(args["output"]):
-        args["output"] = force_gif(args["output"])
+    if is_enabled_at_runtime("force_gif") or is_gif(runtime_value("output")):
+        override_runtime_value("output", force_gif(runtime_value("output")))
 
-    degrade(
-        args["input"],
-        args["output"],
-
-        *passed_business_arguments(args)
-    )
+    degrade_video()
 
 if __name__ == '__main__':
     main()

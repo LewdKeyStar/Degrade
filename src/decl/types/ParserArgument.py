@@ -7,21 +7,14 @@ from typing import Union
 
 from argparse import BooleanOptionalAction
 
-from src.utils.string_utils import abbreviate, to_kebab
+from src.utils.string_utils import to_kebab
+
+from src.decl.types.abstract.Shortenable import Shortenable
 
 @dataclass
-class ParserArgument:
+class ParserArgument(Shortenable):
 
     name: str
-    special_shorthand: str = None
-
-    @property
-    def shorthand(self):
-        return (
-            self.special_shorthand
-            if self.special_shorthand is not None
-            else abbreviate(self.name)
-        )
 
     @property
     def name_fields(self):
@@ -66,8 +59,3 @@ class ParserArgument:
             **self.type_fields,
             **self.value_fields
         )
-
-    # And now, this particular implem's ugly hack
-    # A flag to know if the argument is also an argument of the degrade function.
-
-    pass_to_compute: bool = True
