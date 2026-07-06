@@ -94,7 +94,7 @@ def degrade_video():
         global_options = "-y",
         inputs = {video_output_path: None},
         outputs = {
-            output_path: [
+            runtime_value("output"): [
                 "-vf", gif_filters
             ]
         }

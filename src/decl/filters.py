@@ -4,6 +4,7 @@ from src.decl.types.ParserArgument import ParserArgument
 from src.state.store import runtime_value, is_enabled_at_runtime
 
 from src.utils.filter_utils import filter_join, h264_pad_filter
+from src.utils.name_utils import is_gif
 from src.utils.sort_utils import priority_sort
 
 from src.decl.utils import is_dedicated_rescale_pass, is_not_dedicated_rescale_pass
@@ -197,7 +198,8 @@ all_audio_filters = [
 
 all_gif_filters = [
     Filter(
-        name = "palette",
+        name = "gif_palette",
+        special_shorthand = "p",
 
         parameters = [
             ParserArgument(
@@ -209,7 +211,8 @@ all_gif_filters = [
 
         filter_string = lambda: (
             f"split[s0][s1];"
-            f"[s0]palettegen=max_colors={gif_palette_size}:stats_mode=diff[p];"
+            f"[s0]palettegen=max_colors={runtime_value('gif_palette_size')}"
+            f":stats_mode=diff[p];"
             f"[s1][p]paletteuse=dither=none"
         ),
 
