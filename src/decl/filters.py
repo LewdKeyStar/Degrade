@@ -7,7 +7,10 @@ from src.utils.filter_utils import filter_join, h264_pad_filter
 from src.utils.name_utils import is_gif
 from src.utils.sort_utils import priority_sort
 
-from src.decl.utils import is_dedicated_rescale_pass, is_not_dedicated_rescale_pass
+from src.decl.utils import (
+    is_dedicated_rescale_pass, is_not_dedicated_rescale_pass,
+    is_first_pass, is_last_pass
+)
 
 DEFAULT_NOISE_STRENGTH = 0
 
@@ -46,7 +49,13 @@ all_video_filters = [
             )
         ),
 
-        active_condition = is_not_dedicated_rescale_pass
+        active_condition = lambda: (
+            (
+                not is_enabled_at_runtime("scale_back_post_encode")
+                or
+                is_first_pass()
+            )
+        )
     ),
 
     # There are two types of rescale when it comes to degradation :
