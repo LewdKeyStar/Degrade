@@ -9,6 +9,13 @@ def add_suffix(input_name, suffix):
 def is_gif(input_name):
     return splitext(input_name)[1].lower() == ".gif"
 
+def is_still_image(input_name):
+    return splitext(input_name)[1].lower() in [
+        ".png",
+        ".jpg", ".jpeg", ".jfif",
+        ".webp"
+    ]
+
 def force_gif(output_name):
     return f"{splitext(output_name)[0]}.gif"
 

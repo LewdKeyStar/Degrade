@@ -4,7 +4,13 @@ from os import remove
 from shutil import copyfile
 
 from src.utils.filter_utils import filter_join
-from src.utils.name_utils import add_suffix, is_gif, force_mp4
+from src.utils.name_utils import (
+    add_suffix,
+
+    is_gif, is_still_image,
+
+    force_mp4
+)
 
 from src.decl.filters import (
     get_video_filters_for_pass,
@@ -22,9 +28,12 @@ from src.state.store import (
 def degrade_video():
 
     to_gif = is_gif(runtime_value("output"))
+    to_still_image = is_still_image(runtime_value("output"))
+
+    to_image = to_gif or to_still_image
 
     video_output_path = (
-        runtime_value("output") if not to_gif
+        runtime_value("output") if not to_image
         else force_mp4(runtime_value("output"))
     )
 
@@ -85,21 +94,40 @@ def degrade_video():
         if i > 0:
             remove(pass_input_path)
 
-    if not to_gif:
+    if not to_image:
         return
 
-    gif_filters = get_gif_filters_for_pass()
+    if to_gif:
 
-    gif_command = FFmpeg(
-        global_options = "-y",
-        inputs = {video_output_path: None},
-        outputs = {
-            runtime_value("output"): [
-                "-vf", gif_filters
-            ]
-        }
-    )
+        gif_filters = get_gif_filters_for_pass()
 
-    gif_command.run()
+        gif_command = FFmpeg(
+            global_options = "-y",
+            inputs = {video_output_path: None},
+            outputs = {
+                runtime_value("output"): [
+                    "-vf", gif_filters
+                ]
+            }
+        )
+
+        # print(gif_command.cmd)
+
+        gif_command.run()
+
+    elif to_still_image:
+
+        still_image_command = FFmpeg(
+            global_options = "-y",
+            inputs = {video_output_path: None},
+            outputs = {runtime_value("output"): [
+                "-vf", "select='eq(n, 0)'",
+                "-frames:v", "1", # FIXME : despite this line FFMPEG still issues a warning.
+            ]}
+        )
+
+        # print(still_image_command.cmd)
+
+        still_image_command.run()
 
     remove(video_output_path)
