@@ -179,6 +179,50 @@ all_video_filters = [
             # doesn't a 0-strength filter just do nothing, like blur ?
         )
     ),
+
+    Filter(
+        name = "eq",
+        special_shorthand = "q",
+
+        parameters = [
+            ParserArgument(
+                name = "contrast",
+                type = float,
+                default = 1
+                # range = [-1000, 1000]
+            ),
+
+            ParserArgument(
+                name = "brightness",
+                type = float,
+                # range = [-1, 1]
+            ),
+
+            ParserArgument(
+                name = "saturation",
+                type = float,
+                default = 1
+                # range = [0, 3]
+            ),
+
+            ParserArgument(
+                name = "gamma",
+                type = float,
+                default = 1
+                # range = [0.1, 10]
+            )
+        ],
+
+        filter_string = lambda: (
+            f"eq="
+            f"contrast={runtime_value('eq_contrast')}:"
+            f"brightness={runtime_value('eq_brightness')}:"
+            f"saturation={runtime_value('eq_saturation')}:"
+            f"gamma={runtime_value('eq_gamma')}"
+        ),
+
+        active_condition = is_not_dedicated_rescale_pass
+    )
 ]
 
 all_audio_filters = [
