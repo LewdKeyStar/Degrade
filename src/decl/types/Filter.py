@@ -77,13 +77,16 @@ class Filter(Shortenable):
 
         for param in self.parameters:
 
-            param.name = f"{self.name}_{param.name}"
+            # The order of renaming is a little counter-intuitive :
 
-            param.special_shorthand = (
-                f"{self.shorthand}{param.special_shorthand}"
-                if param.special_shorthand is not None
-                else None
-            )
+            # Assign the shorthand first,
+            # so the filter name doesn't affect it.
+
+            param.special_shorthand = f"{self.shorthand}{param.shorthand}"
+
+            # Only then, assign the name.
+
+            param.name = f"{self.name}_{param.name}"
 
             param.add_to_parser(parser)
 
