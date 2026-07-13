@@ -29,7 +29,7 @@ def init_state():
     global global_namespace
     global_namespace = Namespace()
 
-def runtime_value(key):
+def runtime_value(key, *, numerize_bool = False):
 
     with SubscriptableNamespace(global_namespace) as ns:
 
@@ -38,7 +38,17 @@ def runtime_value(key):
                 f"Attempted access to key {key} which was never registered in store."
             )
 
-        return ns[key]
+        val = ns[key]
+
+        # Pass an int for filters that treat their booleans as such.
+        # Technically, the one option this has been tested with (scale.interl)
+        # Also works with the bool string...but let's not tempt fate.
+
+        if numerize_bool:
+
+            val = 1 if ns[key] else 0
+
+        return val
 
 # Boolean truth value alias.
 

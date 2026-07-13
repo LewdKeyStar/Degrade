@@ -17,6 +17,7 @@ DEFAULT_NOISE_STRENGTH = 0
 DEFAULT_VOLUME_PERCENTAGE = 1
 
 DEFAULT_SCALE_FACTOR = 4
+DEFAULT_SCALE_INTERLACE = 0
 
 DEFAULT_GIF_PALETTE_SIZE = 32
 
@@ -37,13 +38,20 @@ all_video_filters = [
                 type = float,
                 default = DEFAULT_SCALE_FACTOR
             ),
+
+            ParserArgument(
+                name = "interlace",
+                type = bool,
+                default = DEFAULT_SCALE_INTERLACE
+            )
         ],
 
         filter_string = lambda: (
             filter_join(
                 (
                     f"scale=iw/{runtime_value('scale_factor')}:"
-                    f"ih/{runtime_value('scale_factor')}"
+                    f"ih/{runtime_value('scale_factor')}:"
+                    f"interl={runtime_value('scale_interlace', numerize_bool = True)}"
                 ),
                 h264_pad_filter
             )
@@ -68,12 +76,21 @@ all_video_filters = [
         name = "scale_back_pre_encode",
         special_shorthand = "sbe",
 
+        parameters = [
+            ParserArgument(
+                name = "interlace",
+                type = bool,
+                default = DEFAULT_SCALE_INTERLACE
+            )
+        ],
+
         requires_explicit_enabling = True,
 
         filter_string = lambda: filter_join(
             (
                 f"scale=iw*{runtime_value('scale_factor')}:"
-                f"ih*{runtime_value('scale_factor')}"
+                f"ih*{runtime_value('scale_factor')}:"
+                f"interl={runtime_value('scale_back_pre_encode_interlace', numerize_bool = True)}"
             ),
             h264_pad_filter
         ),
@@ -110,17 +127,24 @@ all_video_filters = [
                 special_shorthand = "crf",
                 type = int,
                 default = DEFAULT_SCALE_BACK_POST_ENCODE_CRF
-            )
+            ),
 
             # lower values, of course, lead to higher file sizes, but also...
             # to different types of artifact :
             # for instance, on test videos, 17 preserves mouths but 1 doesn't!
+
+            ParserArgument(
+                name = "interlace",
+                type = bool,
+                default = DEFAULT_SCALE_INTERLACE
+            )
         ],
 
         filter_string = lambda: filter_join(
             (
                 f"scale=iw*{runtime_value('scale_factor')}:"
-                f"ih*{runtime_value('scale_factor')}"
+                f"ih*{runtime_value('scale_factor')}:"
+                f"interl={runtime_value('scale_back_post_encode_interlace', numerize_bool = True)}"
             ),
             h264_pad_filter
         ),
@@ -259,6 +283,12 @@ all_gif_filters = [
                 name = "size",
                 special_shorthand = "",
                 default = DEFAULT_GIF_PALETTE_SIZE
+            ),
+
+            ParserArgument(
+                name = "interlace",
+                type = bool,
+                default = DEFAULT_SCALE_INTERLACE
             )
         ],
 
@@ -287,7 +317,9 @@ all_gif_filters = [
                 name = "factor",
                 type = float,
                 default = 1
-            )
+            ),
+
+
         ],
 
         # Note that we don't need the padding this time,
@@ -295,10 +327,15 @@ all_gif_filters = [
 
         filter_string = lambda: (
             f"scale=iw/{runtime_value('gif_scale_factor')}:"
-            f"ih/{runtime_value('gif_scale_factor')}"
+            f"ih/{runtime_value('gif_scale_factor')}:"
+            f"interl={runtime_value('gif_scale_interlace', numerize_bool = True)}"
         ),
 
-        active_condition = lambda: is_gif(runtime_value("output"))
+        active_condition = lambda: (
+            is_gif(runtime_value("output"))
+            and
+            runtime_value("gif_scale_factor") > 1
+        )
     )
 ]
 
