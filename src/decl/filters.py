@@ -270,6 +270,35 @@ all_gif_filters = [
         ),
 
         active_condition = lambda: is_gif(runtime_value("output"))
+    ),
+
+    # To further complicate the scale rigamarole,
+    # Sometimes, GIFs cannot sanely be rendered at full resolution.
+    # (For instance, if the input is 4K video.)
+    # This means another downscale operation is necessary on the GIF pass,
+    # Otherwise the output would be gigabytes large!
+
+    Filter(
+        name = "gif_scale",
+        special_shorthand = "gs",
+
+        parameters = [
+            ParserArgument(
+                name = "factor",
+                type = float,
+                default = 1
+            )
+        ],
+
+        # Note that we don't need the padding this time,
+        # Since we're not outputting through H.264.
+
+        filter_string = lambda: (
+            f"scale=iw/{runtime_value('gif_scale_factor')}:"
+            f"ih/{runtime_value('gif_scale_factor')}"
+        ),
+
+        active_condition = lambda: is_gif(runtime_value("output"))
     )
 ]
 
