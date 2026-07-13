@@ -7,7 +7,7 @@ from src.utils.filter_utils import filter_join
 from src.utils.name_utils import (
     add_suffix,
 
-    is_gif, is_still_image,
+    is_gif, is_still_image, is_h264_incompatible,
 
     force_mp4
 )
@@ -25,6 +25,8 @@ from src.state.store import (
     add_to_runtime
 )
 
+h264_incompatible_formats = [ "webm" ]
+
 def degrade_video():
 
     to_gif = is_gif(runtime_value("output"))
@@ -33,8 +35,9 @@ def degrade_video():
     to_image = to_gif or to_still_image
 
     video_output_path = (
-        runtime_value("output") if not to_image
-        else force_mp4(runtime_value("output"))
+        force_mp4(runtime_value("output"))
+        if to_image or is_h264_incompatible(runtime_value("output"))
+        else runtime_value("output")
     )
 
     if is_enabled_at_runtime("scale_back_post_encode"):

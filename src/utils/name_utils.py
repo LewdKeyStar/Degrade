@@ -16,6 +16,12 @@ def is_still_image(input_name):
         ".webp"
     ]
 
+def is_h264_incompatible(input_name):
+    return splitext(input_name)[1].lower() in [
+        ".webm",
+        # TODO : find the others !
+    ]
+
 def force_gif(output_name):
     return f"{splitext(output_name)[0]}.gif"
 
