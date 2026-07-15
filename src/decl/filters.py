@@ -283,12 +283,6 @@ all_gif_filters = [
                 name = "size",
                 special_shorthand = "",
                 default = DEFAULT_GIF_PALETTE_SIZE
-            ),
-
-            ParserArgument(
-                name = "interlace",
-                type = bool,
-                default = DEFAULT_SCALE_INTERLACE
             )
         ],
 
@@ -319,7 +313,11 @@ all_gif_filters = [
                 default = 1
             ),
 
-
+            ParserArgument(
+                name = "interlace",
+                type = bool,
+                default = DEFAULT_SCALE_INTERLACE
+            )
         ],
 
         # Note that we don't need the padding this time,
