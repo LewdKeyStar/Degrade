@@ -71,7 +71,7 @@ def degrade_video():
         )
 
         video_command = FFmpeg(
-            global_options = "-y",
+            global_options = "-y -hide_banner",
             inputs = {pass_input_path: None},
             outputs = {
                 video_output_path: [
@@ -90,7 +90,8 @@ def degrade_video():
             }
         )
 
-        # print(video_command.cmd)
+        if is_enabled_at_runtime("print_commands"):
+            print(video_command.cmd)
 
         video_command.run()
 
@@ -105,7 +106,7 @@ def degrade_video():
         gif_filters = get_gif_filters_for_pass()
 
         gif_command = FFmpeg(
-            global_options = "-y",
+            global_options = "-y -hide_banner",
             inputs = {video_output_path: None},
             outputs = {
                 runtime_value("output"): [
@@ -114,14 +115,15 @@ def degrade_video():
             }
         )
 
-        # print(gif_command.cmd)
+        if is_enabled_at_runtime("print_commands"):
+            print(gif_command.cmd)
 
         gif_command.run()
 
     elif to_still_image:
 
         still_image_command = FFmpeg(
-            global_options = "-y",
+            global_options = "-y -hide_banner",
             inputs = {video_output_path: None},
             outputs = {runtime_value("output"): [
                 "-vf", "select='eq(n, 0)'",
@@ -129,7 +131,8 @@ def degrade_video():
             ]}
         )
 
-        # print(still_image_command.cmd)
+        if is_enabled_at_runtime("print_commands"):
+            print(still_image_command.cmd)
 
         still_image_command.run()
 

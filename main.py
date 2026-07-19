@@ -4,6 +4,7 @@ from src.impl.degrade import degrade_video
 
 from src.decl.encoding_options import register_encoding_options
 from src.decl.filters import register_filters
+from src.decl.meta_options import register_meta_options
 
 import src.state.store as store
 from src.state.store import runtime_value, override_runtime_value, is_enabled_at_runtime
@@ -50,6 +51,7 @@ def main():
 
     register_encoding_options(parser)
     register_filters(parser)
+    register_meta_options(parser)
 
     store.init_state()
 
