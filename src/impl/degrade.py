@@ -11,6 +11,7 @@ from src.utils.name_utils import (
 
     force_mp4
 )
+from src.utils.loudness_utils import get_integrated_loudness
 
 from src.decl.filters import (
     get_video_filters_for_pass,
@@ -33,6 +34,7 @@ def degrade_video():
     to_still_image = is_still_image(runtime_value("output"))
 
     to_image = to_gif or to_still_image
+    to_video = not to_image
 
     video_output_path = (
         force_mp4(runtime_value("output"))
@@ -95,11 +97,18 @@ def degrade_video():
 
         video_command.run()
 
-        if i > 0:
-            remove(pass_input_path)
+        # after each pass, remove the input, except if :
 
-    if not to_image:
-        return
+        if not (
+            # this was the first pass (where the input is the original file)
+            i == 0
+            or
+            # this is the last pass with a video output
+            # in which case it requires loudness normalization,
+            # so we leave the _input copy alone to serve as the input for that.
+            ((i == runtime_value("passes") - 1) and to_video)
+        ):
+            remove(pass_input_path)
 
     if to_gif:
 
@@ -136,4 +145,40 @@ def degrade_video():
 
         still_image_command.run()
 
-    remove(video_output_path)
+    # Even basic video output requires another step :
+    # Loudness normalization.
+    # This is because low bitrates often lead to clipping,
+    # ESPECIALLY with multiple passes.
+    # The audio levels can become dangerously high with no safeguards ;
+    # This prevents it.
+
+    else:
+
+        target_integrated_loudness = get_integrated_loudness(
+            runtime_value("input")
+        )
+
+        if target_integrated_loudness is not None: # <=> if there is an audio stream at all
+
+            loudness_normalisation_command = FFmpeg(
+                global_options = "-y -hide_banner",
+                inputs = {pass_input_path: None},
+                outputs = {runtime_value("output"): [
+                    "-c:v", "copy",
+                    "-af", f"loudnorm=i={target_integrated_loudness}"
+                ]}
+            )
+
+            if is_enabled_at_runtime("print_commands"):
+                print(loudness_normalisation_command.cmd)
+
+            loudness_normalisation_command.run()
+
+    # If the final input is an image, remove the video that produced it.
+    if to_image:
+        remove(video_output_path)
+    # Otherwise, the video IS the output, so we do not remove it ;
+    # However, we do remove the input of the last pass,
+    # Which was left behind for sound normalization to pick up.
+    else:
+        remove(pass_input_path)

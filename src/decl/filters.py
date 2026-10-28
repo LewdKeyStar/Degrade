@@ -250,27 +250,38 @@ all_video_filters = [
 ]
 
 all_audio_filters = [
-    Filter(
-        name = "volume",
 
-        parameters = [
-            # Low bitrates can lead to HEAVY clipping after multiple passes.
-            # Users should lower the volume if they care for their ears !
+    # TODO :
+    # The volume filter was introduced to mitigate clipping induced by low bitrates.
+    # This was fixed by universal loudness normalization,
+    # A preferable solution, because it does not require users knowing about it.
+    # However, there are still scenarios where we would hypothetically want volume modification,
+    # To purposely make a degraded video loud or quiet.
+    # But if this was done, loudness renormalization would cancel it.
+    # Therefore the volume filter is disabled for now.
+    # To re-introduce it, we need to find a way for the volume filter to apply ONLY on the normalization pass.
+    # Of course, this complicates the pass application situation even more.
+    # This is starting to look like we need a dedicated class to determine filters on each pass.
 
-            ParserArgument(
-                name = "percentage",
-                special_shorthand = "",
-                type = float,
-                default = DEFAULT_VOLUME_PERCENTAGE
-            )
-        ],
-
-        filter_string = lambda: (
-            f"volume=volume={runtime_value('volume_percentage')}"
-        ),
-
-        active_condition = is_not_dedicated_rescale_pass
-    )
+    # Filter(
+    #     name = "volume",
+    #
+    #     parameters = [
+    #
+    #         ParserArgument(
+    #             name = "percentage",
+    #             special_shorthand = "",
+    #             type = float,
+    #             default = DEFAULT_VOLUME_PERCENTAGE
+    #         )
+    #     ],
+    #
+    #     filter_string = lambda: (
+    #         f"volume=volume={runtime_value('volume_percentage')}"
+    #     ),
+    #
+    #     active_condition = is_not_dedicated_rescale_pass
+    # )
 ]
 
 all_gif_filters = [
